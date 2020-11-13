@@ -11,7 +11,8 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:generator-miniprogram-files.createPage"
+		"onCommand:generator-miniprogram-files.createPage",
+		"onCommand:generator-miniprogram-files.createComponent"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -26,13 +27,14 @@
 			}
 		],
 		"menus": {
-			"explorer/context": [{
-				"command": "generator-miniprogram-files.createPage"
-			},
-			{
-				"command": "generator-miniprogram-files.createComponent"
-			}
-		]
+			"explorer/context": [
+				{
+					"command": "generator-miniprogram-files.createPage"
+				},
+				{
+					"command": "generator-miniprogram-files.createComponent"
+				}
+			]
 		}
 	},
 	"scripts": {

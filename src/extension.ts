@@ -1,13 +1,13 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
-import { dirname, join } from 'path';
+import * as vscode from "vscode";
+import { dirname, join } from "path";
 import { existsSync, lstatSync } from "fs";
-import { getPageTemplate, getComponentTemplate } from './template';
+import { getPageTemplate, getComponentTemplate } from "./template";
 
 const templateMap = {
 	page: getPageTemplate,
-	component: getComponentTemplate
+	component: getComponentTemplate,
 };
 
 // 如果传入的是文件则返回父目录
@@ -17,7 +17,6 @@ function getPath(path: string): string {
 			return path;
 		}
 		return getPath(dirname(path));
-
 	} catch (e) {
 		vscode.window.showErrorMessage(`所选目录无效`);
 		return "";
@@ -31,29 +30,30 @@ async function getFileName(typeName: string): Promise<string> {
 		ignoreFocusOut: true,
 		placeHolder: `输入${typeName}名称`,
 		prompt: `自动生成${typeName}对应文件`,
-		// validateInput: function (text) {
-		// 	return text;
-		// },
+		validateInput: function (text) {
+			if (text.match(/\?|\*|:|<|>|\/|\\|^\s/)) {return "不允许使用特殊符号";}
+			if (text.length > 30) {return "文件名过长";}
+		},
 	});
 
-	if (!word) { return ""; }
-
-	return word;
-
+	return word || "";
 }
 
 async function generatorFiles(typeName: string, pathObj: any) {
 	try {
-
 		// 返回有效的文件目录
 		let path = getPath(pathObj.fsPath);
-		if (!path) { return; }
+		if (!path) {
+			return;
+		}
 
 		if (!templateMap[typeName]) {
 			return;
 		}
 		let name = await getFileName(typeName);
-		if (!name) { return; }
+		if (!name) {
+			return;
+		}
 
 		let fileMap = templateMap[typeName]();
 		let writeDates = [];
@@ -68,36 +68,38 @@ async function generatorFiles(typeName: string, pathObj: any) {
 
 			writeDates.push({
 				uri: vscode.Uri.file(filePath),
-				data: Buffer.from(fileMap[exp], "utf8")
+				data: Buffer.from(fileMap[exp], "utf8"),
 			});
 		}
 
-		writeDates.forEach(item => {
+		writeDates.forEach((item) => {
 			vscode.workspace.fs.writeFile(item.uri, item.data);
 		});
 
 		vscode.window.showInformationMessage(`创建${typeName}（${name}）成功`);
-
 	} catch (e) {
 		vscode.window.showErrorMessage(e);
 	}
 }
 
 export function activate(context: vscode.ExtensionContext) {
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			"generator-miniprogram-files.createPage",
+			async function (pathObj) {
+				generatorFiles("page", pathObj);
+			}
+		)
+	);
 
-	context.subscriptions.push(vscode.commands.registerCommand(
-		"generator-miniprogram-files.createPage",
-		async function (pathObj) {
-			generatorFiles("page", pathObj);
-		}
-	));
-
-	context.subscriptions.push(vscode.commands.registerCommand(
-		"generator-miniprogram-files.createComponent",
-		async function (pathObj) {
-			generatorFiles("component", pathObj);
-		}
-	));
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			"generator-miniprogram-files.createComponent",
+			async function (pathObj) {
+				generatorFiles("component", pathObj);
+			}
+		)
+	);
 }
 
 // this method is called when your extension is deactivated
